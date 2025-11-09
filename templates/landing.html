@@ -42,45 +42,62 @@
       const phoneInput = document.getElementById('phone');
       const submitBtn = document.getElementById('submit');
       const msg = document.getElementById('msg');
-
+          
       function setMessage(text, ok=true) {
         msg.textContent = text;
-        msg.style.color = ok ? '#7CFC00' : '#ff6b6b';
+        msg.style.color = ok ? '#007bff' : '#ff4d4f';
       }
-
+      
+      function validatePhoneFormat(phone) {
+        // +98 followed by 9 digits
+        const regex = /^\+989\d{9}$/;
+        return regex.test(phone);
+      }
+      
       async function submitPhone() {
         const phone = phoneInput.value.trim();
+      
+        if (!validatePhoneFormat(phone)) {
+          setMessage("Invalid phone format. Use +989XXXXXXXX", false);
+          return;
+        }
+      
         submitBtn.disabled = true;
-        setMessage('در حال ارسال...');
+        setMessage('Submitting...');
+      
         try {
           const res = await fetch('/api/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone })
           });
+        
           const data = await res.json();
+        
           if (res.ok && data.ok) {
-            setMessage(data.duplicate ? 'قبلا ثبت شده بود.' : 'ثبت شد.');
-            phoneInput.value = '';
+            setMessage(data.duplicate ? 'Phone already submitted.' : 'Phone submitted successfully.');
+            if (!data.duplicate) phoneInput.value = '';
           } else if (data.error === 'invalid_phone') {
-            setMessage('شماره معتبر نیست.', false);
+            setMessage('Invalid phone number.', false);
           } else if (data.error === 'rate_limited') {
-            setMessage('زیادی تلاش کردید. بعدا دوباره امتحان کنید.', false);
+            setMessage('Too many attempts. Please try again later.', false);
           } else {
-            setMessage('خطای نامشخص.', false);
+            setMessage('Unknown error occurred.', false);
           }
+        
         } catch (e) {
-          setMessage('خطای شبکه.', false);
+          setMessage('Network error. Please try again.', false);
         } finally {
           submitBtn.disabled = false;
         }
       }
-
+      
       submitBtn.addEventListener('click', submitPhone);
       phoneInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') submitPhone();
       });
     </script>
+
   </body>
   </html>
 
