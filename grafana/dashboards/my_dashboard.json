@@ -38,7 +38,7 @@
       "targets": [
         {
           "expr": "(sum(endpoint_requests_total{status=\"success\"}) / sum(endpoint_requests_total))*100",
-          "legendFormat": "success_rate",
+          "legendFormat": "success_rate (%)",
           "refId": "A"
         }
       ],
