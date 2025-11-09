@@ -1,0 +1,163 @@
+{
+  "id": null,
+  "uid": "endpoint-monitor-dashboard",
+  "title": "Endpoint Monitor – Heavy Load Test",
+  "tags": ["endpoint", "load", "latency", "success"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 },
+      "type": "stat",
+      "title": "Total Requests",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(endpoint_requests_total)",
+          "legendFormat": "total",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"]
+        },
+        "orientation": "auto",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 2,
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 },
+      "type": "stat",
+      "title": "Success Rate",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "(sum(endpoint_requests_total{status=\"success\"}) / sum(endpoint_requests_total))*100",
+          "legendFormat": "success_rate",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "unit": "percent",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        }
+      }
+    },
+    {
+      "id": 3,
+      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 8 },
+      "type": "graph",
+      "title": "Requests Rate (per second)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(endpoint_requests_total[1m])",
+          "legendFormat": "req/s",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "tooltip": { "shared": true }
+      }
+    },
+    {
+      "id": 4,
+      "gridPos": { "x": 0, "y": 14, "w": 24, "h": 8 },
+      "type": "graph",
+      "title": "Latency Distribution (Histogram)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(endpoint_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95 latency",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.50, rate(endpoint_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "p50 latency",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(endpoint_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99 latency",
+          "refId": "C"
+        }
+      ],
+      "options": {
+        "tooltip": { "shared": true },
+        "yaxes": [
+          { "format": "s", "label": "seconds" },
+          { "format": "short" }
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "gridPos": { "x": 0, "y": 22, "w": 24, "h": 6 },
+      "type": "table",
+      "title": "Error Breakdown by Status",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by(status) (endpoint_requests_total{status!=\"success\"})",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "options": { "showHeader": true }
+    },
+    {
+      "id": 6,
+      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 },
+      "type": "timeseries",
+      "title": "Latency Over Time (p50, p95, p99)",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(endpoint_request_duration_seconds_bucket[1m])) by (le))",
+          "legendFormat": "p50 latency",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(endpoint_request_duration_seconds_bucket[1m])) by (le))",
+          "legendFormat": "p95 latency",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(endpoint_request_duration_seconds_bucket[1m])) by (le))",
+          "legendFormat": "p99 latency",
+          "refId": "C"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "custom": {
+            "drawStyle": "lines",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never"
+          }
+        }
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": { "mode": "multi" }
+      }
+    }
+  ],
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "schemaVersion": 27,
+  "version": 2
+}

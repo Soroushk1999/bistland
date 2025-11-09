@@ -1,0 +1,139 @@
+services:
+  web:
+    build: .
+    command: gunicorn landing.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    env_file: .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+      - mongo
+      - minio
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: .
+    entrypoint: ["/app/entrypoint.sh"]
+    command: celery -A landing worker -l info
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+      - mongo
+      - minio
+
+  beat:
+    build: .
+    entrypoint: ["/app/entrypoint.sh"]
+    command: celery -A landing beat -l info
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    # Ports commented out - containers access via Docker network
+    # Uncomment below if you need external access for debugging:
+    # ports:
+    #   - "6380:6379"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=landing
+      - POSTGRES_USER=landing
+      - POSTGRES_PASSWORD=landing
+    # Ports commented out - containers access via Docker network
+    # Uncomment below if you need external access for debugging:
+    # ports:
+    #   - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mongo:
+    image: mongo:6
+    # Ports commented out - containers access via Docker network
+    # Uncomment below if you need external access for debugging:
+    # ports:
+    #   - "27018:27017"
+    volumes:
+      - mongodata:/data/db
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - miniodata:/data
+    ports:
+      - "9000:9000"  # API port (needed for browser to access media files)
+      - "9001:9001"  # Console port (web UI for managing files)
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+
+  prometheus:
+    image: prom/prometheus:latest
+    command: --config.file=/etc/prometheus/prometheus.yml --web.listen-address=:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - web
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
+  locust-master:
+    image: locustio/locust:2.29.0
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+    # Target Django app at http://web:8000 (Docker network)
+    command: -f /mnt/locust/locustfile.py --master --host http://web:8000
+    depends_on:
+      - web
+
+  locust-worker:
+    image: locustio/locust:2.29.0
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+    command: -f /mnt/locust/locustfile.py --worker --master-host locust-master
+    depends_on:
+      - locust-master
+    
+volumes:
+  pgdata:
+  mongodata:
+  miniodata:
+
+
+

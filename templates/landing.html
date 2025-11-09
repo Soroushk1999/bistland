@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Landing</title>
+    <style>
+      body { font-family: sans-serif; margin: 0; background: #0b132b; color: #e0e0e0; }
+      .hero { display: grid; place-items: center; min-height: 60vh; background: #1c2541; }
+      .container { max-width: 640px; margin: 24px auto; padding: 16px; }
+      .card { background: #243b55; padding: 16px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+      .row { display: flex; gap: 8px; }
+      input { flex: 1; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #556; background: #0b132b; color: #e0e0e0; }
+      button { padding: 12px 16px; font-size: 16px; border-radius: 6px; background: #00c2ff; color: #00111a; border: none; cursor: pointer; }
+      button:disabled { opacity: .6; cursor: not-allowed; }
+      .msg { margin-top: 12px; min-height: 20px; }
+      .hero img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="container">
+        {% if minio_enabled %}
+        <img src="{{ media_url }}hero-image.jpg" alt="Hero" onerror="this.src='https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?w=1200'" />
+        {% else %}
+        <img src="https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?w=1200" alt="Hero" />
+        {% endif %}
+      </div>
+    </div>
+    <div class="container">
+      <div class="card">
+        <h2>شماره موبایل خود را وارد کنید</h2>
+        <div class="row">
+          <input id="phone" inputmode="tel" placeholder="مثال: 09121234567 یا +989121234567" />
+          <button id="submit">ثبت</button>
+        </div>
+        <div id="msg" class="msg"></div>
+      </div>
+    </div>
+
+    <script>
+      const phoneInput = document.getElementById('phone');
+      const submitBtn = document.getElementById('submit');
+      const msg = document.getElementById('msg');
+
+      function setMessage(text, ok=true) {
+        msg.textContent = text;
+        msg.style.color = ok ? '#7CFC00' : '#ff6b6b';
+      }
+
+      async function submitPhone() {
+        const phone = phoneInput.value.trim();
+        submitBtn.disabled = true;
+        setMessage('در حال ارسال...');
+        try {
+          const res = await fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone })
+          });
+          const data = await res.json();
+          if (res.ok && data.ok) {
+            setMessage(data.duplicate ? 'قبلا ثبت شده بود.' : 'ثبت شد.');
+            phoneInput.value = '';
+          } else if (data.error === 'invalid_phone') {
+            setMessage('شماره معتبر نیست.', false);
+          } else if (data.error === 'rate_limited') {
+            setMessage('زیادی تلاش کردید. بعدا دوباره امتحان کنید.', false);
+          } else {
+            setMessage('خطای نامشخص.', false);
+          }
+        } catch (e) {
+          setMessage('خطای شبکه.', false);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      }
+
+      submitBtn.addEventListener('click', submitPhone);
+      phoneInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitPhone();
+      });
+    </script>
+  </body>
+  </html>
+
+
+
