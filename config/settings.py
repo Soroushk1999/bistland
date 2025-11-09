@@ -42,7 +42,7 @@ MIDDLEWARE = [
     "django_prometheus.middleware.PrometheusAfterMiddleware",
 ]
 
-ROOT_URLCONF = "landing.urls"
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
@@ -60,8 +60,8 @@ TEMPLATES = [
     }
 ]
 
-WSGI_APPLICATION = "landing.wsgi.application"
-ASGI_APPLICATION = "landing.asgi.application"
+WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
 default_engine = os.environ.get("DB_ENGINE", "django.db.backends.sqlite3")
 if default_engine == "django.db.backends.postgresql":

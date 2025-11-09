@@ -29,7 +29,7 @@ ENV DJANGO_SETTINGS_MODULE=config.settings
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Set the command
-CMD ["gunicorn", "landing.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
 
 
 

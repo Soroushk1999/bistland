@@ -3,9 +3,9 @@ from .models import Phone
 
 
 @admin.register(Phone)
-class LeadAdmin(admin.ModelAdmin):
-    list_display = ("id", "phone", "created_at", "ip_address")
-    search_fields = ("phone", "ip_address", "user_agent")
+class PhoneAdmin(admin.ModelAdmin):
+    list_display = ("id", "phone", "created_at")
+    search_fields = ("phone",)
     list_filter = ("created_at",)
 
 

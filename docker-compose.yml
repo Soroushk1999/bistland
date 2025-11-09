@@ -1,7 +1,7 @@
 services:
   web:
     build: .
-    command: gunicorn landing.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
     env_file: .env
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings
@@ -18,7 +18,7 @@ services:
   worker:
     build: .
     entrypoint: ["/app/entrypoint.sh"]
-    command: celery -A landing worker -l info
+    command: celery -A config worker -l info
     env_file: .env
     volumes:
       - .:/app
@@ -31,7 +31,7 @@ services:
   beat:
     build: .
     entrypoint: ["/app/entrypoint.sh"]
-    command: celery -A landing beat -l info
+    command: celery -A config beat -l info
     env_file: .env
     volumes:
       - .:/app
