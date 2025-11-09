@@ -43,6 +43,9 @@ fi
 
 # Only run migrations and collectstatic for web service (gunicorn)
 if [[ "$*" == *"gunicorn"* ]]; then
+    echo "Making migrations..."
+    python manage.py makemigrations --noinput || echo "No changes detected."
+
     echo "Running migrations..."
     python manage.py migrate --noinput
     

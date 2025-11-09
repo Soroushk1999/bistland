@@ -40,10 +40,8 @@ services:
 
   redis:
     image: redis:7-alpine
-    # Ports commented out - containers access via Docker network
-    # Uncomment below if you need external access for debugging:
-    # ports:
-    #   - "6380:6379"
+    ports:
+      - "6379:6379"
 
   db:
     image: postgres:15-alpine
@@ -51,19 +49,15 @@ services:
       - POSTGRES_DB=landing
       - POSTGRES_USER=landing
       - POSTGRES_PASSWORD=landing
-    # Ports commented out - containers access via Docker network
-    # Uncomment below if you need external access for debugging:
-    # ports:
-    #   - "5433:5432"
+    ports:
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   mongo:
     image: mongo:6
-    # Ports commented out - containers access via Docker network
-    # Uncomment below if you need external access for debugging:
-    # ports:
-    #   - "27018:27017"
+    ports:
+      - "27017:27017"
     volumes:
       - mongodata:/data/db
 
